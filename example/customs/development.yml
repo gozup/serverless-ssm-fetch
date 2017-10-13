@@ -1,0 +1,6 @@
+env_vars:
+  NODE_ENV: "development"
+serverlessSsmFetch:
+  APP_ID: /aws/ssm/parameter/path/app_id
+  APP_KEY: /aws/ssm/parameter/path/app_key
+  APP_SECRET: /aws/ssm/parameter/path/app_secret~true

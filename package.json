@@ -1,15 +1,21 @@
 {
   "name": "serverless-ssm-fetch",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "main": "dist/serverless-ssm-fetch.js",
+  "description": "Sets \"AWS Systems Manager Parameter Store (SSM)\" parameters into functions' environment variables.",
   "scripts": {
     "babel": "babel --presets env src/serverless-ssm-fetch.js --out-file dist/serverless-ssm-fetch.js"
   },
   "dependencies": {
+    "aws-sdk": "^2.131.0",
     "bluebird": "^3.5.1"
   },
   "devDependencies": {
-    "aws-sdk": "^2.131.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/gozup/serverless-ssm-fetch.git"
   }
 }

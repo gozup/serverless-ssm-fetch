@@ -147,7 +147,7 @@ class SsmFetch {
 
       }
 
-      this.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(currentFunction.environment));
+      this.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(Object.keys(currentFunction.environment)));
 
     });
 

@@ -158,7 +158,7 @@ var SsmFetch = function () {
           });
         }
 
-        _this3.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(currentFunction.environment));
+        _this3.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(Object.keys(currentFunction.environment)));
       });
     }
   }, {

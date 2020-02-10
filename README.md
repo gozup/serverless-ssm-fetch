@@ -12,7 +12,12 @@ Before using this plugin you must have set your parameters into [AWS System Mana
 
 ## Setup
 
-First, you have to set `serverless-ssm-fetch` plugin in your `serverless.yml` file.
+First, you have to set `serverless-ssm-fetch` plugin by running: 
+```
+serverless plugin install --name serverless-ssm-fetch
+```
+
+This will install the required npm package and add the plugin to your `serverless.yml` file.
 ```yaml
 ...
 

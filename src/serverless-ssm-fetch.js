@@ -48,7 +48,10 @@ class SsmFetch {
       let ssmClient = new AWS.SSM({region: this.serverless.service.provider.region});
 
       // Get the SSM Parameters set in serverless.yml
-      let ssmParameters = this.serverless.service.custom['serverlessSsmFetch'];
+      let ssmParameters = this.serverless.service.custom['serverlessSsmFetch']['parameteres'];
+      
+      //Check the variable to hiden logs
+      let hideLogs = this.serverless.provider.custom['serverlessSsmFetch']['hideLogs'] || false;
 
       // Init an empty collection of Promises that will be populated by
       // the needed calls to AWS.SSM to get all parameters
@@ -77,8 +80,10 @@ class SsmFetch {
 
           // Triggers the `getParameter`request to AWS.SSM
           ssmClient.getParameter(params, function (err, data) {
+            if (!hideLogs) {
             self.serverless.cli.log('> serverless-ssm-fetch: Fetching "' + parameter + ': ' + ssmParameters[parameter] + '" ...');
-            if (err) {
+            }
+              if (err) {
               self.serverless.cli.log('> serverless-ssm-fetch: ' + err);
               reject(err);
             } else {

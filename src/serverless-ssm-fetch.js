@@ -95,7 +95,7 @@ class SsmFetch {
       Promise.all(promiseCollection)
           .then((success) => {
             this.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-            this.serverless.cli.log(JSON.stringify(this.serverless.variables.serverlessSsmFetch));
+            this.serverless.cli.log(JSON.stringify(Object.keys(this.serverless.variables.serverlessSsmFetch)));
             return resolve(success);
           })
           .catch((error) => {

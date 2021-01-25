@@ -109,7 +109,7 @@ var SsmFetch = function () {
         // Triggers all `getParameter` queries concurrently
         Promise.all(promiseCollection).then(function (success) {
           _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-          _this2.serverless.cli.log(JSON.stringify(_this2.serverless.variables.serverlessSsmFetch));
+          _this2.serverless.cli.log(JSON.stringify(Object.keys(_this2.serverless.variables.serverlessSsmFetch)));
           return resolve(success);
         }).catch(function (error) {
           _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameter: ERROR');

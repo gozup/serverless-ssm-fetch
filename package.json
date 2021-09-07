@@ -10,6 +10,9 @@
     "aws-sdk": "^2.131.0",
     "bluebird": "^3.5.1"
   },
+  "peerDependencies": {
+    "serverless": "2.55.0"
+  },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0"

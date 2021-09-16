@@ -4,3 +4,5 @@ node_modules
 # Serverless directories
 .idea
 /example/.serverless/
+.npmrc
+.DS_Store

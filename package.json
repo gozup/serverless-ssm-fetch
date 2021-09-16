@@ -11,7 +11,7 @@
     "bluebird": "^3.5.1"
   },
   "peerDependencies": {
-    "serverless": "2.11.0"
+    "serverless": "^2.11.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

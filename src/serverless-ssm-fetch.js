@@ -6,9 +6,14 @@ import AWS from 'aws-sdk';
 class SsmFetch {
 
   constructor(serverless, options) {
-
     this.serverless = serverless;
     this.options = options;
+
+    serverless.configSchemaHandler.defineFunctionProperties('aws', {
+      properties: {
+        ssmToEnvironment: { type: 'array' }
+      },
+    });
 
     this.validate();
 
@@ -25,6 +30,8 @@ class SsmFetch {
         }
       }
     };
+
+    
 
     this.hooks = {
       'after:package:cleanup': () => {

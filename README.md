@@ -10,6 +10,12 @@ Before using this plugin you must have set your parameters into [AWS System Mana
 * ssm:Get*
 * ssm:List*
 
+## Versions
+
+* For serverless framework **v2**: use serverless-ssm-fetch@**1.x**
+* For serverless framework **v3**: use serverless-ssm-fetch@**2.x**
+
+
 ## Setup
 
 First, you have to set `serverless-ssm-fetch` plugin by running: 

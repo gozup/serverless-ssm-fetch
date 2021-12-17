@@ -17,8 +17,10 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var SsmFetch = function () {
-  function SsmFetch(serverless, options) {
+  function SsmFetch(serverless, options, _ref) {
     var _this = this;
+
+    var log = _ref.log;
 
     _classCallCheck(this, SsmFetch);
 
@@ -53,19 +55,23 @@ var SsmFetch = function () {
         return _this._triggeredFromHook ? BbPromise.resolve() : BbPromise.reject(new Error('Internal use only'));
       },
       'serverless-ssm-fetch:parameter:get': function serverlessSsmFetchParameterGet() {
-        return BbPromise.bind(_this).then(_this.getParameter).then(_this.assignParameter);
+        return BbPromise.bind(_this).then(function () {
+          return _this.getParameter(log);
+        }).then(function () {
+          return _this.assignParameter(log);
+        });
       }
     };
   }
 
   _createClass(SsmFetch, [{
     key: 'getParameter',
-    value: function getParameter() {
+    value: function getParameter(log) {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
 
-        _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameters...');
+        log.info('> serverless-ssm-fetch: Get parameters...');
 
         // Instantiate an AWS.SSM client()
         var ssmClient = new _awsSdk2.default.SSM({ region: _this2.serverless.service.provider.region });
@@ -100,9 +106,9 @@ var SsmFetch = function () {
 
             // Triggers the `getParameter`request to AWS.SSM
             ssmClient.getParameter(params, function (err, data) {
-              self.serverless.cli.log('> serverless-ssm-fetch: Fetching "' + parameter + ': ' + ssmParameters[parameter] + '" ...');
+              log.info('> serverless-ssm-fetch: Fetching "' + parameter + ': ' + ssmParameters[parameter] + '"...');
               if (err) {
-                self.serverless.cli.log('> serverless-ssm-fetch: ' + err);
+                log.error('> serverless-ssm-fetch: ' + err);
                 reject(err);
               } else {
                 self.serverless.serverlessSsmFetch[parameter] = data.Parameter.Value;
@@ -114,19 +120,19 @@ var SsmFetch = function () {
 
         // Triggers all `getParameter` queries concurrently
         Promise.all(promiseCollection).then(function (success) {
-          _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-          _this2.serverless.cli.log(JSON.stringify(Object.keys(_this2.serverless.serverlessSsmFetch)));
+          log.info('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
+          log.info(JSON.stringify(Object.keys(_this2.serverless.serverlessSsmFetch), null, 2));
           return resolve(success);
         }).catch(function (error) {
-          _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameter: ERROR');
-          _this2.serverless.cli.log(error);
+          log.error('> serverless-ssm-fetch: Get parameter: ERROR');
+          log.error(error);
           return reject(error);
         });
       });
     }
   }, {
     key: 'assignParameter',
-    value: function assignParameter() {
+    value: function assignParameter(log) {
       var _this3 = this;
 
       // forEach function to deploy
@@ -164,7 +170,8 @@ var SsmFetch = function () {
           });
         }
 
-        _this3.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(Object.keys(currentFunction.environment)));
+        log.info('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables:');
+        log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
       });
     }
   }, {

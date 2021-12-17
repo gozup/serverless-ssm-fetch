@@ -5,7 +5,7 @@ import AWS from 'aws-sdk';
 
 class SsmFetch {
 
-  constructor(serverless, options) {
+  constructor(serverless, options, { log }) {
     this.serverless = serverless;
     this.options = options;
 
@@ -31,8 +31,6 @@ class SsmFetch {
       }
     };
 
-    
-
     this.hooks = {
       'after:package:cleanup': () => {
         this._triggeredFromHook = true;
@@ -40,16 +38,16 @@ class SsmFetch {
       },
       'serverless-ssm-fetch:parameter:validate': () => this._triggeredFromHook ? BbPromise.resolve() : BbPromise.reject(new Error('Internal use only')),
       'serverless-ssm-fetch:parameter:get': () => BbPromise.bind(this)
-          .then(this.getParameter)
-          .then(this.assignParameter)
+          .then(() => this.getParameter(log))
+          .then(() => this.assignParameter(log))
     }
   }
 
-  getParameter() {
+  getParameter(log) {
 
     return new Promise((resolve, reject) => {
 
-      this.serverless.cli.log('> serverless-ssm-fetch: Get parameters...');
+      log.info('> serverless-ssm-fetch: Get parameters...');
 
       // Instantiate an AWS.SSM client()
       let ssmClient = new AWS.SSM({region: this.serverless.service.provider.region});
@@ -84,9 +82,9 @@ class SsmFetch {
 
           // Triggers the `getParameter`request to AWS.SSM
           ssmClient.getParameter(params, function (err, data) {
-            self.serverless.cli.log('> serverless-ssm-fetch: Fetching "' + parameter + ': ' + ssmParameters[parameter] + '" ...');
+            log.info(`> serverless-ssm-fetch: Fetching "${parameter}: ${ssmParameters[parameter]}"...`);
             if (err) {
-              self.serverless.cli.log('> serverless-ssm-fetch: ' + err);
+              log.error(`> serverless-ssm-fetch: ${err}`);
               reject(err);
             } else {
               self.serverless.serverlessSsmFetch[parameter] = data.Parameter.Value;
@@ -101,13 +99,13 @@ class SsmFetch {
       // Triggers all `getParameter` queries concurrently
       Promise.all(promiseCollection)
           .then((success) => {
-            this.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-            this.serverless.cli.log(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch)));
+            log.info('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
+            log.info(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch), null, 2));
             return resolve(success);
           })
           .catch((error) => {
-            this.serverless.cli.log('> serverless-ssm-fetch: Get parameter: ERROR');
-            this.serverless.cli.log(error);
+            log.error('> serverless-ssm-fetch: Get parameter: ERROR');
+            log.error(error);
             return reject(error);
           });
 
@@ -115,7 +113,7 @@ class SsmFetch {
 
   }
 
-  assignParameter() {
+  assignParameter(log) {
 
     // forEach function to deploy
     Object.keys(this.serverless.service.functions).forEach((functionName) => {
@@ -154,7 +152,8 @@ class SsmFetch {
 
       }
 
-      this.serverless.cli.log('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables: ' + JSON.stringify(Object.keys(currentFunction.environment)));
+      log.info(`> serverless-ssm-fetch: Function "${functionName}" set environment variables:`);
+      log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
 
     });
 

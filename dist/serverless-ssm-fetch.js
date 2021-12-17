@@ -81,7 +81,7 @@ var SsmFetch = function () {
         var self = _this2;
 
         // Init serverless variable that will store fetched data
-        _this2.serverless.variables.serverlessSsmFetch = {};
+        _this2.serverless.serverlessSsmFetch = {};
 
         // For each SSM parameters to retrieve
         Object.keys(ssmParameters).forEach(function (parameter) {
@@ -105,7 +105,7 @@ var SsmFetch = function () {
                 self.serverless.cli.log('> serverless-ssm-fetch: ' + err);
                 reject(err);
               } else {
-                self.serverless.variables.serverlessSsmFetch[parameter] = data.Parameter.Value;
+                self.serverless.serverlessSsmFetch[parameter] = data.Parameter.Value;
                 resolve(data);
               }
             });
@@ -115,7 +115,7 @@ var SsmFetch = function () {
         // Triggers all `getParameter` queries concurrently
         Promise.all(promiseCollection).then(function (success) {
           _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-          _this2.serverless.cli.log(JSON.stringify(Object.keys(_this2.serverless.variables.serverlessSsmFetch)));
+          _this2.serverless.cli.log(JSON.stringify(Object.keys(_this2.serverless.serverlessSsmFetch)));
           return resolve(success);
         }).catch(function (error) {
           _this2.serverless.cli.log('> serverless-ssm-fetch: Get parameter: ERROR');
@@ -133,7 +133,7 @@ var SsmFetch = function () {
       Object.keys(this.serverless.service.functions).forEach(function (functionName) {
         // Aliases of the current function path and the got ssm parameters path
         var currentFunction = _this3.serverless.service.functions[functionName];
-        var fetchedSsmParameters = _this3.serverless.variables.serverlessSsmFetch;
+        var fetchedSsmParameters = _this3.serverless.serverlessSsmFetch;
 
         if (_this3.isSet(currentFunction.ssmToEnvironment)) {
           // If the property `ssmToEnvironment` has been set at the function level

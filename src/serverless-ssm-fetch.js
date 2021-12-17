@@ -65,7 +65,7 @@ class SsmFetch {
       let self = this;
 
       // Init serverless variable that will store fetched data
-      this.serverless.variables.serverlessSsmFetch = {};
+      this.serverless.serverlessSsmFetch = {};
 
       // For each SSM parameters to retrieve
       Object.keys(ssmParameters).forEach((parameter) => {
@@ -89,7 +89,7 @@ class SsmFetch {
               self.serverless.cli.log('> serverless-ssm-fetch: ' + err);
               reject(err);
             } else {
-              self.serverless.variables.serverlessSsmFetch[parameter] = data.Parameter.Value;
+              self.serverless.serverlessSsmFetch[parameter] = data.Parameter.Value;
               resolve(data);
             }
           });
@@ -102,7 +102,7 @@ class SsmFetch {
       Promise.all(promiseCollection)
           .then((success) => {
             this.serverless.cli.log('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-            this.serverless.cli.log(JSON.stringify(Object.keys(this.serverless.variables.serverlessSsmFetch)));
+            this.serverless.cli.log(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch)));
             return resolve(success);
           })
           .catch((error) => {
@@ -121,7 +121,7 @@ class SsmFetch {
     Object.keys(this.serverless.service.functions).forEach((functionName) => {
       // Aliases of the current function path and the got ssm parameters path
       let currentFunction = this.serverless.service.functions[functionName];
-      let fetchedSsmParameters = this.serverless.variables.serverlessSsmFetch;
+      let fetchedSsmParameters = this.serverless.serverlessSsmFetch;
 
       if (this.isSet(currentFunction.ssmToEnvironment)) {
         // If the property `ssmToEnvironment` has been set at the function level

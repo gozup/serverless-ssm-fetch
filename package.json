@@ -4,18 +4,20 @@
   "main": "dist/serverless-ssm-fetch.js",
   "description": "Sets \"AWS Systems Manager Parameter Store (SSM)\" parameters into functions' environment variables.",
   "scripts": {
-    "babel": "babel --presets env src/serverless-ssm-fetch.js --out-file dist/serverless-ssm-fetch.js"
+    "babel": "babel --presets env src/serverless-ssm-fetch.js --out-file dist/serverless-ssm-fetch.js",
+    "upgrade-interactive": "npm-check --update"
   },
   "dependencies": {
-    "aws-sdk": "^2.131.0",
-    "bluebird": "^3.5.1"
+    "aws-sdk": "^2.1046.0",
+    "bluebird": "^3.7.2"
   },
   "peerDependencies": {
     "serverless": "^2.11.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.6.0"
+    "babel-preset-env": "^1.6.0",
+    "npm-check": "^5.9.2"
   },
   "repository": {
     "type": "git",

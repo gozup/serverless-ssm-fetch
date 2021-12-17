@@ -25,6 +25,12 @@ var SsmFetch = function () {
     this.serverless = serverless;
     this.options = options;
 
+    serverless.configSchemaHandler.defineFunctionProperties('aws', {
+      properties: {
+        ssmToEnvironment: { type: 'array' }
+      }
+    });
+
     this.validate();
 
     this.commands = {

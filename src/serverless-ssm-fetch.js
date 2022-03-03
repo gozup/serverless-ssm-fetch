@@ -100,7 +100,6 @@ class SsmFetch {
       Promise.all(promiseCollection)
           .then((success) => {
             log.info('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-            log.info(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch), null, 2));
             return resolve(success);
           })
           .catch((error) => {
@@ -152,8 +151,7 @@ class SsmFetch {
 
       }
 
-      log.info(`> serverless-ssm-fetch: Function "${functionName}" set environment variables:`);
-      log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
+      log.info(`> serverless-ssm-fetch: Function "${functionName}" set environment variables:`)
 
     });
 

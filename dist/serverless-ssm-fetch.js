@@ -27,6 +27,15 @@ var SsmFetch = function () {
     this.serverless = serverless;
     this.options = options;
 
+    serverless.configSchemaHandler.defineProvider('aws', {
+      provider: {
+        type: "object",
+        properties: {
+          ssmToEnvironment: { type: 'array' }
+        }
+      }
+    });
+
     serverless.configSchemaHandler.defineFunctionProperties('aws', {
       properties: {
         ssmToEnvironment: { type: 'array' }
@@ -47,6 +56,10 @@ var SsmFetch = function () {
     };
 
     this.hooks = {
+      'package:function:package': function packageFunctionPackage() {
+        _this._triggeredFromHook = true;
+        return _this.serverless.pluginManager.run(['serverless-ssm-fetch', 'parameter']);
+      },
       'after:package:cleanup': function afterPackageCleanup() {
         _this._triggeredFromHook = true;
         return _this.serverless.pluginManager.run(['serverless-ssm-fetch', 'parameter']);
@@ -58,7 +71,7 @@ var SsmFetch = function () {
         return BbPromise.bind(_this).then(function () {
           return _this.getParameter(log);
         }).then(function () {
-          return _this.assignParameter(log);
+          return _this.assignParameters(log);
         });
       }
     };
@@ -131,61 +144,74 @@ var SsmFetch = function () {
       });
     }
   }, {
-    key: 'assignParameter',
-    value: function assignParameter(log) {
+    key: 'assignParameters',
+    value: function assignParameters(log) {
       var _this3 = this;
 
-      // forEach function to deploy
-      Object.keys(this.serverless.service.functions).forEach(function (functionName) {
-        // Aliases of the current function path and the got ssm parameters path
-        var currentFunction = _this3.serverless.service.functions[functionName];
-        var fetchedSsmParameters = _this3.serverless.serverlessSsmFetch;
+      if (this.options.function) {
+        // Function to deploy
+        var currentFunction = this.serverless.service.functions[this.options.function];
+        this.assignParameter(log, currentFunction);
+      } else {
+        // forEach function to deploy
+        Object.keys(this.serverless.service.functions).forEach(function (functionName) {
+          // Aliases of the current function path and the got ssm parameters path
+          var currentFunction = _this3.serverless.service.functions[functionName];
+          _this3.assignParameter(log, currentFunction);
+        });
+      }
+    }
+  }, {
+    key: 'assignParameter',
+    value: function assignParameter(log, currentFunction) {
+      var _this4 = this;
 
-        if (_this3.isSet(currentFunction.ssmToEnvironment)) {
-          // If the property `ssmToEnvironment` has been set at the function level
+      var fetchedSsmParameters = this.serverless.serverlessSsmFetch;
 
-          // Creates the function `environment` property if it doesn't already exist
-          if (!_this3.isSet(currentFunction.environment)) {
-            currentFunction.environment = {};
-          }
+      if (this.isSet(currentFunction.ssmToEnvironment)) {
+        // If the property `ssmToEnvironment` has been set at the function level
 
-          // forEach ssmParameter assigned over `ssmToEnvironment` function property...
-          currentFunction.ssmToEnvironment.forEach(function (ssmParameterToAssign) {
-            if (_this3.isSet(fetchedSsmParameters[ssmParameterToAssign])) {
-              // merges it into the function `environment` property
-              currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
-            }
-          });
-        } else {
-          // Else, the property `ssmToEnvironment` has NOT been set at the function level
-
-          // Creates the function `environment` property if it doesn't already exist
-          if (!_this3.isSet(currentFunction.environment)) {
-            currentFunction.environment = {};
-          }
-
-          // Merges ALL the fetched ssmParameters
-          Object.keys(fetchedSsmParameters).forEach(function (ssmParameterToAssign) {
-            currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
-          });
+        // Creates the function `environment` property if it doesn't already exist
+        if (!this.isSet(currentFunction.environment)) {
+          currentFunction.environment = {};
         }
 
-        log.info('> serverless-ssm-fetch: Function "' + functionName + '" set environment variables:');
-        log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
-      });
+        // forEach ssmParameter assigned over `ssmToEnvironment` function property...
+        currentFunction.ssmToEnvironment.forEach(function (ssmParameterToAssign) {
+          if (_this4.isSet(fetchedSsmParameters[ssmParameterToAssign])) {
+            // merges it into the function `environment` property
+            currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
+          }
+        });
+      } else {
+        // Else, the property `ssmToEnvironment` has NOT been set at the function level
+
+        // Creates the function `environment` property if it doesn't already exist
+        if (!this.isSet(currentFunction.environment)) {
+          currentFunction.environment = {};
+        }
+
+        // Merges ALL the fetched ssmParameters
+        Object.keys(fetchedSsmParameters).forEach(function (ssmParameterToAssign) {
+          currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
+        });
+      }
+
+      log.info('> serverless-ssm-fetch: Function "' + currentFunction.name + '" set environment variables:');
+      log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
     }
   }, {
     key: 'validate',
     value: function validate() {
-      var _this4 = this;
+      var _this5 = this;
 
       setTimeout(function () {
-        if (_this4.serverless.service.provider.name !== 'aws') {
-          throw new _this4.serverless.classes.Error('> serverless-ssm-fetch: The plugin "serverless-ssm-fetch" is only available for `aws` provider.');
+        if (_this5.serverless.service.provider.name !== 'aws') {
+          throw new _this5.serverless.classes.Error('> serverless-ssm-fetch: The plugin "serverless-ssm-fetch" is only available for `aws` provider.');
         }
 
-        if (!_this4.isSet(_this4.serverless.service.custom) || !_this4.isSet(_this4.serverless.service.custom['serverlessSsmFetch'])) {
-          throw new _this4.serverless.classes.Error('> serverless-ssm-fetch: You are using the plugin "serverless-ssm-fetch". You must set a `custom.serverlessSsmFetch` element in your serverless conf file.');
+        if (!_this5.isSet(_this5.serverless.service.custom) || !_this5.isSet(_this5.serverless.service.custom['serverlessSsmFetch'])) {
+          throw new _this5.serverless.classes.Error('> serverless-ssm-fetch: You are using the plugin "serverless-ssm-fetch". You must set a `custom.serverlessSsmFetch` element in your serverless conf file.');
         }
       }, 5000);
     }

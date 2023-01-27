@@ -1,6 +1,6 @@
 {
   "name": "serverless-ssm-fetch",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "dist/serverless-ssm-fetch.js",
   "description": "Sets \"AWS Systems Manager Parameter Store (SSM)\" parameters into functions' environment variables.",
   "scripts": {

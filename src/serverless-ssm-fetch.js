@@ -9,10 +9,19 @@ class SsmFetch {
     this.serverless = serverless;
     this.options = options;
 
+    serverless.configSchemaHandler.defineProvider('aws', {
+      provider: {
+        type: "object",
+        properties: {
+          ssmToEnvironment: { type: 'array' }
+        }
+      }
+    })
+
     serverless.configSchemaHandler.defineFunctionProperties('aws', {
       properties: {
         ssmToEnvironment: { type: 'array' }
-      },
+      }
     });
 
     this.validate();
@@ -32,14 +41,18 @@ class SsmFetch {
     };
 
     this.hooks = {
+      'package:function:package': () => {
+        this._triggeredFromHook = true;
+        return this.serverless.pluginManager.run(['serverless-ssm-fetch', 'parameter'])
+      },
       'after:package:cleanup': () => {
         this._triggeredFromHook = true;
         return this.serverless.pluginManager.run(['serverless-ssm-fetch', 'parameter'])
       },
       'serverless-ssm-fetch:parameter:validate': () => this._triggeredFromHook ? BbPromise.resolve() : BbPromise.reject(new Error('Internal use only')),
       'serverless-ssm-fetch:parameter:get': () => BbPromise.bind(this)
-          .then(() => this.getParameter(log))
-          .then(() => this.assignParameter(log))
+        .then(() => this.getParameter(log))
+        .then(() => this.assignParameters(log))
     }
   }
 
@@ -50,7 +63,7 @@ class SsmFetch {
       log.info('> serverless-ssm-fetch: Get parameters...');
 
       // Instantiate an AWS.SSM client()
-      let ssmClient = new AWS.SSM({region: this.serverless.service.provider.region});
+      let ssmClient = new AWS.SSM({ region: this.serverless.service.provider.region });
 
       // Get the SSM Parameters set in serverless.yml
       let ssmParameters = this.serverless.service.custom['serverlessSsmFetch'];
@@ -98,64 +111,72 @@ class SsmFetch {
 
       // Triggers all `getParameter` queries concurrently
       Promise.all(promiseCollection)
-          .then((success) => {
-            log.info('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
-            log.info(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch), null, 2));
-            return resolve(success);
-          })
-          .catch((error) => {
-            log.error('> serverless-ssm-fetch: Get parameter: ERROR');
-            log.error(error);
-            return reject(error);
-          });
+        .then((success) => {
+          log.info('> serverless-ssm-fetch: Get parameters success. Fetched SSM parameters:');
+          log.info(JSON.stringify(Object.keys(this.serverless.serverlessSsmFetch), null, 2));
+          return resolve(success);
+        })
+        .catch((error) => {
+          log.error('> serverless-ssm-fetch: Get parameter: ERROR');
+          log.error(error);
+          return reject(error);
+        });
 
     });
 
   }
 
-  assignParameter(log) {
+  assignParameters(log) {
+    if (this.options.function) {
+      // Function to deploy
+      let currentFunction = this.serverless.service.functions[this.options.function]
+      this.assignParameter(log, currentFunction);
+    } else {
+      // forEach function to deploy
+      Object.keys(this.serverless.service.functions).forEach((functionName) => {
+        // Aliases of the current function path and the got ssm parameters path
+        let currentFunction = this.serverless.service.functions[functionName];
+        this.assignParameter(log, currentFunction);
+      });
+    }
+  }
 
-    // forEach function to deploy
-    Object.keys(this.serverless.service.functions).forEach((functionName) => {
-      // Aliases of the current function path and the got ssm parameters path
-      let currentFunction = this.serverless.service.functions[functionName];
-      let fetchedSsmParameters = this.serverless.serverlessSsmFetch;
+  assignParameter(log, currentFunction) {
+    let fetchedSsmParameters = this.serverless.serverlessSsmFetch;
 
-      if (this.isSet(currentFunction.ssmToEnvironment)) {
-        // If the property `ssmToEnvironment` has been set at the function level
+    if (this.isSet(currentFunction.ssmToEnvironment)) {
+      // If the property `ssmToEnvironment` has been set at the function level
 
-        // Creates the function `environment` property if it doesn't already exist
-        if (!this.isSet(currentFunction.environment)) {
-          currentFunction.environment = {};
-        }
-
-        // forEach ssmParameter assigned over `ssmToEnvironment` function property...
-        currentFunction.ssmToEnvironment.forEach((ssmParameterToAssign) => {
-          if (this.isSet(fetchedSsmParameters[ssmParameterToAssign])) {
-            // merges it into the function `environment` property
-            currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
-          }
-        })
-
-      } else {
-        // Else, the property `ssmToEnvironment` has NOT been set at the function level
-
-        // Creates the function `environment` property if it doesn't already exist
-        if (!this.isSet(currentFunction.environment)) {
-          currentFunction.environment = {};
-        }
-
-        // Merges ALL the fetched ssmParameters
-        Object.keys(fetchedSsmParameters).forEach((ssmParameterToAssign) => {
-          currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
-        })
-
+      // Creates the function `environment` property if it doesn't already exist
+      if (!this.isSet(currentFunction.environment)) {
+        currentFunction.environment = {};
       }
 
-      log.info(`> serverless-ssm-fetch: Function "${functionName}" set environment variables:`);
-      log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
+      // forEach ssmParameter assigned over `ssmToEnvironment` function property...
+      currentFunction.ssmToEnvironment.forEach((ssmParameterToAssign) => {
+        if (this.isSet(fetchedSsmParameters[ssmParameterToAssign])) {
+          // merges it into the function `environment` property
+          currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
+        }
+      })
 
-    });
+    } else {
+      // Else, the property `ssmToEnvironment` has NOT been set at the function level
+
+      // Creates the function `environment` property if it doesn't already exist
+      if (!this.isSet(currentFunction.environment)) {
+        currentFunction.environment = {};
+      }
+
+      // Merges ALL the fetched ssmParameters
+      Object.keys(fetchedSsmParameters).forEach((ssmParameterToAssign) => {
+        currentFunction.environment[ssmParameterToAssign] = fetchedSsmParameters[ssmParameterToAssign];
+      })
+
+    }
+
+    log.info(`> serverless-ssm-fetch: Function "${currentFunction.name}" set environment variables:`);
+    log.info(JSON.stringify(Object.keys(currentFunction.environment), null, 2));
 
   }
 
